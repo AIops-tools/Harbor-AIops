@@ -1,5 +1,7 @@
 name: Publish to PyPI
 
+# First public package release uses the Harbor-specific pending PyPI publisher.
+
 # Trusted Publishing (OIDC) — publishes from GitHub's runners with no API token,
 # sidestepping the local-IP / account new-project rate limit. Configure a matching
 # "trusted publisher" for this package on PyPI (see the repo release notes).

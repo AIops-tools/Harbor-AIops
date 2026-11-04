@@ -1,5 +1,7 @@
 name: mcp-publish
 
+# Registry publication follows the Harbor wheel's first appearance on PyPI.
+
 on:
   workflow_dispatch:
   release:
