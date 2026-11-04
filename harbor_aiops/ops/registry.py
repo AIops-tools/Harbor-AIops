@@ -16,6 +16,52 @@ def projects(conn: HarborConnection, limit: int = 50) -> dict:
     return conn.list("/projects", limit=limit)
 
 
+def statistics(conn: HarborConnection) -> dict:
+    value = conn.get("/statistics")
+    if not isinstance(value, dict):
+        raise ValueError("Harbor statistics response was not an object.")
+    return value
+
+
+def project_members(conn: HarborConnection, name: str, limit: int = 50) -> dict:
+    return conn.list(f"/projects/{segment(name)}/members", limit=limit)
+
+
+def immutable_rules(conn: HarborConnection, name: str, limit: int = 50) -> dict:
+    return conn.list(f"/projects/{segment(name)}/immutabletagrules", limit=limit)
+
+
+def robot_accounts(conn: HarborConnection, limit: int = 50) -> dict:
+    result = conn.list("/robots", limit=limit)
+    if any(not isinstance(item, dict) for item in result["items"]):
+        raise ValueError("Harbor robot account list contained a non-object.")
+    result["items"] = [
+        {**item, **({"secret": "[REDACTED]"} if "secret" in item else {})}
+        for item in result["items"]
+    ]
+    return result
+
+
+def labels(conn: HarborConnection, limit: int = 50) -> dict:
+    return conn.list("/labels", limit=limit)
+
+
+def scan_metrics(conn: HarborConnection, scheduled: bool = False) -> dict:
+    path = "/scans/schedule/metrics" if scheduled else "/scans/all/metrics"
+    value = conn.get(path)
+    if not isinstance(value, dict):
+        raise ValueError("Harbor scan metrics response was not an object.")
+    return value
+
+
+def scan_log(
+    conn: HarborConnection, project: str, repository: str, reference: str, report_id: str
+) -> dict:
+    return conn.get_text(
+        _artifact_path(project, repository, reference) + f"/scan/{segment(report_id)}/log"
+    )
+
+
 def project(conn: HarborConnection, name: str) -> dict:
     value = conn.get(f"/projects/{segment(name)}")
     if not isinstance(value, dict):

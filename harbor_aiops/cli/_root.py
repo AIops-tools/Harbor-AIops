@@ -37,6 +37,72 @@ def _print(result: dict, noun: str = "records") -> None:
     print_truncation_note(result, noun)
 
 
+@app.command("statistics")
+@cli_errors
+def statistics(target: Target = None) -> None:
+    """Show registry-wide project and repository counts."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_statistics
+    _print(harbor_statistics(target=target))
+
+
+@app.command("project-members")
+@cli_errors
+def project_members(project: str, limit: Limit = 50, target: Target = None) -> None:
+    """List members of a Harbor project."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_project_members
+    _print(harbor_project_members(project=project, limit=limit, target=target), "members")
+
+
+@app.command("immutable-rules")
+@cli_errors
+def immutable_rules(project: str, limit: Limit = 50, target: Target = None) -> None:
+    """List tag immutability rules for a project."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_immutable_rules
+    _print(harbor_immutable_rules(project=project, limit=limit, target=target), "rules")
+
+
+@app.command("robot-accounts")
+@cli_errors
+def robot_accounts(limit: Limit = 50, target: Target = None) -> None:
+    """List robot accounts without exposing their secrets."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_robot_accounts
+    _print(harbor_robot_accounts(limit=limit, target=target), "robot accounts")
+
+
+@app.command("labels")
+@cli_errors
+def labels(limit: Limit = 50, target: Target = None) -> None:
+    """List Harbor labels."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_labels
+    _print(harbor_labels(limit=limit, target=target), "labels")
+
+
+@app.command("scan-all-metrics")
+@cli_errors
+def scan_all_metrics(target: Target = None) -> None:
+    """Show latest registry-wide scan metrics."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_scan_all_metrics
+    _print(harbor_scan_all_metrics(target=target))
+
+
+@app.command("scheduled-scan-metrics")
+@cli_errors
+def scheduled_scan_metrics(target: Target = None) -> None:
+    """Show latest scheduled scan metrics."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_scheduled_scan_metrics
+    _print(harbor_scheduled_scan_metrics(target=target))
+
+
+@app.command("scan-log")
+@cli_errors
+def scan_log(project: str, repository: str, reference: str, report_id: str,
+             target: Target = None) -> None:
+    """Show a bounded artifact scan report log."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_scan_log
+    _print(harbor_scan_log(project=project, repository=repository, reference=reference,
+                           report_id=report_id, target=target))
+
+
 @app.command("projects")
 @cli_errors
 def projects(limit: Limit = 50, target: Target = None) -> None:

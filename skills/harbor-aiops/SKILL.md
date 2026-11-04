@@ -19,6 +19,6 @@ metadata: {"openclaw":{"requires":{"anyBins":["uvx"]},"optional":{"env":["HARBOR
 
 # Harbor AIops
 
-Use `harbor-aiops diagnose` for a broad first look, then `projects`, `repositories`, `artifacts`, `vulnerabilities`, `gc`, `replication`, or `retention` and their detail/log commands. Configure targets with `harbor-aiops init` and run `harbor-aiops doctor` to test access. The MCP server registers 26 Harbor read tools, two maintenance writes and two governance tools.
+Use `harbor-aiops diagnose` for a broad first look, then `projects`, `repositories`, `artifacts`, `vulnerabilities`, `gc`, `replication`, or `retention` and their detail/log commands. For project access and security checks use `project-members`, `immutable-rules`, `robot-accounts` and scan metrics. Configure targets with `harbor-aiops init` and run `harbor-aiops doctor` to test access. The MCP server registers 34 Harbor read tools, two maintenance writes and two governance tools.
 
 Do not claim a failed or unauthorized probe means there are zero failures. Check `error`, `complete`, and `truncated`. A scan returns `outcomeUnknown` until completion is observed; a tag write can return `outcomeUnknown` if post-read verification failed. Do not blindly retry either write. See [guardrails](references/agent-guardrails.md) and [capabilities](references/capabilities.md).

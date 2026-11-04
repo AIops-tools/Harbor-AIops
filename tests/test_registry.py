@@ -193,12 +193,60 @@ def test_mcp_surface_has_governed_inventory_and_diagnosis():
     from harbor_aiops.mcp_server.server import mcp
 
     listed = asyncio.run(mcp.list_tools())
-    assert len(listed) == 30
+    assert len(listed) == 38
     assert {t.name for t in listed} >= {"harbor_gc_history", "harbor_replication_tasks",
                                              "harbor_retention_executions", "harbor_diagnose"}
     writes = {"undo_apply", "harbor_scan_artifact", "harbor_create_tag"}
     assert all(t.annotations.read_only_hint for t in listed if t.name not in writes)
     assert all(not t.annotations.read_only_hint for t in listed if t.name in writes)
+
+
+def test_new_registry_reads_use_swagger_paths_and_redact_robot_secret():
+    seen = []
+
+    def handler(request):
+        path = request.url.path
+        seen.append((path, dict(request.url.params)))
+        if path == "/api/v2.0/statistics":
+            return httpx.Response(200, json={"total_project_count": 2})
+        if path == "/api/v2.0/projects/ops/members":
+            return httpx.Response(200, json=[{"entity_name": "alice"}])
+        if path == "/api/v2.0/projects/ops/immutabletagrules":
+            return httpx.Response(200, json=[{"id": 7}])
+        if path == "/api/v2.0/robots":
+            return httpx.Response(200, json=[{"name": "bot", "secret": "sensitive"}])
+        if path == "/api/v2.0/labels":
+            return httpx.Response(200, json=[{"name": "prod"}])
+        if path in ("/api/v2.0/scans/all/metrics", "/api/v2.0/scans/schedule/metrics"):
+            return httpx.Response(200, json={"status": "finished"})
+        if path.endswith("/scan/report-7/log"):
+            assert b"team%252Fapp" in request.url.raw_path
+            return httpx.Response(200, text="scan complete")
+        raise AssertionError(f"Unexpected {path}")
+
+    conn = _connection(handler)
+    assert registry.statistics(conn)["total_project_count"] == 2
+    assert registry.project_members(conn, "ops", 1)["items"][0]["entity_name"] == "alice"
+    assert registry.immutable_rules(conn, "ops", 1)["returned"] == 1
+    assert registry.robot_accounts(conn, 1)["items"] == [
+        {"name": "bot", "secret": "[REDACTED]"}
+    ]
+    assert registry.labels(conn, 1)["returned"] == 1
+    assert registry.scan_metrics(conn)["status"] == "finished"
+    assert registry.scan_metrics(conn, scheduled=True)["status"] == "finished"
+    assert registry.scan_log(conn, "ops", "team/app", "v1", "report-7") == {
+        "text": "scan complete", "truncated": False,
+    }
+    assert any(query.get("page_size") == "2" for _, query in seen)
+
+
+def test_robot_account_permission_failure_and_bad_shape_are_not_empty():
+    denied = _connection(lambda request: httpx.Response(403, json={}))
+    with pytest.raises(HarborApiError, match="permission"):
+        registry.robot_accounts(denied)
+    bad = _connection(lambda request: httpx.Response(200, json=["not an object"]))
+    with pytest.raises(ValueError, match="non-object"):
+        registry.robot_accounts(bad)
 
 
 def test_loopback_harbor_client_does_not_send_basic_auth_to_environment_proxy(

@@ -10,6 +10,79 @@ from harbor_aiops.ops import registry
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
+def harbor_statistics(target: Optional[str] = None) -> dict:
+    """[READ] Get registry-wide project and repository counts."""
+    return registry.statistics(_get_connection(target))
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_project_members(
+    project: str, limit: int = 50, target: Optional[str] = None
+) -> dict:
+    """[READ] List a Harbor project's members with measured truncation."""
+    return registry.project_members(_get_connection(target), project, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_immutable_rules(
+    project: str, limit: int = 50, target: Optional[str] = None
+) -> dict:
+    """[READ] List tag immutability rules for a project."""
+    return registry.immutable_rules(_get_connection(target), project, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_robot_accounts(limit: int = 50, target: Optional[str] = None) -> dict:
+    """[READ] List robot account metadata with any returned secret redacted."""
+    return registry.robot_accounts(_get_connection(target), limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_labels(limit: int = 50, target: Optional[str] = None) -> dict:
+    """[READ] List Harbor labels with measured truncation."""
+    return registry.labels(_get_connection(target), limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_scan_all_metrics(target: Optional[str] = None) -> dict:
+    """[READ] Get metrics from the latest registry-wide scan."""
+    return registry.scan_metrics(_get_connection(target))
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_scheduled_scan_metrics(target: Optional[str] = None) -> dict:
+    """[READ] Get metrics from the latest scheduled registry-wide scan."""
+    return registry.scan_metrics(_get_connection(target), scheduled=True)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_scan_log(
+    project: str, repository: str, reference: str, report_id: str,
+    target: Optional[str] = None,
+) -> dict:
+    """[READ] Read a bounded artifact scan report log by report ID."""
+    return registry.scan_log(
+        _get_connection(target), project, repository, reference, report_id
+    )
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
 def harbor_gc_execution(gc_id: int, target: Optional[str] = None) -> dict:
     """[READ] Get one Harbor garbage-collection execution's current state."""
     return registry.gc_execution(_get_connection(target), gc_id)

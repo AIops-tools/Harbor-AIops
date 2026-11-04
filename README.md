@@ -1,12 +1,14 @@
 <!-- mcp-name: io.github.AIops-tools/harbor-aiops -->
 # Harbor AIops
 
-Governed Harbor container-registry operations with 30 MCP tools and corresponding CLI commands. Every call is audited and budgeted by the bundled governance harness. Two maintenance operations—artifact scan and tag creation—have dry-run previews; uncertain results are reported as `outcomeUnknown`.
+Governed Harbor container-registry operations with 38 MCP tools and corresponding CLI commands. Every call is audited and budgeted by the bundled governance harness. Two maintenance operations—artifact scan and tag creation—have dry-run previews; uncertain results are reported as `outcomeUnknown`.
 
 ## What it checks
 
 - Component health and system volume use.
 - Projects, repository inventory, artifacts, tags, vulnerability reports, quotas and project audit logs.
+- Registry statistics, project members, tag immutability rules, labels and robot metadata (secrets redacted).
+- Latest registry-wide and scheduled scan metrics, plus bounded artifact scan report logs.
 - Garbage collection execution history.
 - GC execution details and bounded plain-text logs.
 - Replication policies, executions, tasks and bounded task logs.
