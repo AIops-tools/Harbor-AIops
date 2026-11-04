@@ -1,7 +1,7 @@
 {
   "id": "harbor-aiops",
   "name": "Harbor AIops",
-  "description": "Governed Harbor registry operations — 30 MCP tools with audit.",
+  "description": "Governed Harbor registry operations — 39 MCP tools with audit.",
   "skills": [
     "./skills"
   ],

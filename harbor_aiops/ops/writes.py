@@ -4,7 +4,12 @@ from __future__ import annotations
 
 import re
 
-from harbor_aiops.connection import HarborConnection, repository_segment, segment
+from harbor_aiops.connection import (
+    HarborApiError,
+    HarborConnection,
+    repository_segment,
+    segment,
+)
 from harbor_aiops.governance import mark_unknown
 from harbor_aiops.ops import registry
 
@@ -66,3 +71,47 @@ def create_tag(
         return mark_unknown({"accepted": True, "response": response,
                              "verificationError": "Tag not yet visible or list truncated."})
     return {"created": True, "tag": tag, "artifactDigest": digest, "response": response}
+
+
+def delete_tag(
+    conn: HarborConnection, project: str, repository: str, reference: str,
+    tag: str, dry_run: bool = False,
+) -> dict:
+    """Delete exactly one proven, non-immutable tag and verify it no longer resolves."""
+    if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]{0,127}", tag):
+        raise ValueError("Invalid OCI tag name.")
+    before = registry.artifact(conn, project, repository, reference)
+    digest = before.get("digest")
+    if not isinstance(digest, str) or not digest:
+        raise ValueError("Harbor did not return an artifact digest; refusing tag deletion.")
+    tagged = registry.artifact(conn, project, repository, tag)
+    if tagged.get("digest") != digest:
+        raise ValueError("Tag resolves to a different artifact; refusing deletion.")
+    listed = registry.tags(conn, project, repository, digest, limit=500)
+    matching = [item for item in listed["items"] if isinstance(item, dict)
+                and item.get("name") == tag]
+    if len(matching) != 1:
+        raise ValueError("Could not identify exactly one matching tag; refusing deletion.")
+    if matching[0].get("immutable") is not False:
+        raise ValueError("Tag immutability is true or unknown; refusing deletion.")
+    if dry_run:
+        return {"dryRun": True, "artifactDigest": digest, "wouldDeleteTag": tag}
+    response = conn.write(
+        "DELETE", _artifact_path(project, repository, digest) + f"/tags/{segment(tag)}",
+        expected_status=200,
+    )
+    try:
+        registry.artifact(conn, project, repository, tag)
+    except HarborApiError as exc:
+        if exc.status_code == 404:
+            return {"deleted": True, "tag": tag, "artifactDigest": digest,
+                    "response": response}
+        return mark_unknown({"accepted": True, "response": response,
+                             "verificationError": f"Harbor returned HTTP {exc.status_code}."})
+    except Exception as exc:
+        return mark_unknown({
+            "accepted": True, "response": response,
+            "verificationError": f"Post-delete read failed: {type(exc).__name__}.",
+        })
+    return mark_unknown({"accepted": True, "response": response,
+                         "verificationError": "Tag still resolves after deletion."})

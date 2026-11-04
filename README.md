@@ -1,7 +1,7 @@
 <!-- mcp-name: io.github.AIops-tools/harbor-aiops -->
 # Harbor AIops
 
-Governed Harbor container-registry operations with 38 MCP tools and corresponding CLI commands. Every call is audited and budgeted by the bundled governance harness. Two maintenance operations—artifact scan and tag creation—have dry-run previews; uncertain results are reported as `outcomeUnknown`.
+Governed Harbor container-registry operations with 39 MCP tools and corresponding CLI commands. Every call is audited and budgeted by the bundled governance harness. Artifact scan, tag creation and high-risk tag deletion have dry-run previews; uncertain results are reported as `outcomeUnknown`.
 
 ## What it checks
 
@@ -9,6 +9,7 @@ Governed Harbor container-registry operations with 38 MCP tools and correspondin
 - Projects, repository inventory, artifacts, tags, vulnerability reports, quotas and project audit logs.
 - Registry statistics, project members, tag immutability rules, labels and robot metadata (secrets redacted).
 - Latest registry-wide and scheduled scan metrics, plus bounded artifact scan report logs.
+- Guarded deletion of one proven, mutable tag with an absence post-check.
 - Garbage collection execution history.
 - GC execution details and bounded plain-text logs.
 - Replication policies, executions, tasks and bounded task logs.
@@ -36,7 +37,7 @@ Run `uv run harbor-aiops secret set primary`, then `uv run harbor-aiops doctor` 
 
 ## Scope and verification
 
-The `scan-artifact` command starts an asynchronous scan and reports an unknown final outcome until its status is checked. `create-tag` proves the tag was absent and checks that it appeared after the write; it does not mint an undo token because immutability and later artifact changes can make inverse deletion unsafe. Retention execution, replication restart, GC start/stop, artifact deletion and policy changes remain outside this release until their actual outcomes and recovery paths can be verified on disposable Harbor. See [verification](docs/VERIFICATION.md). Missing operations and live-environment feedback are welcome as issues or PRs.
+The `scan-artifact` command starts an asynchronous scan and reports an unknown final outcome until its status is checked. `create-tag` proves the tag was absent and checks that it appeared after the write. `delete-tag` requires an exact mutable tag on the specified digest, previews the target and confirms absence after deletion. Neither tag write mints an undo token because immutability and later artifact changes can make the inverse unsafe. Retention execution, replication restart, GC start/stop, artifact deletion and policy changes remain outside this release until their actual outcomes and recovery paths can be verified on disposable Harbor. See [verification](docs/VERIFICATION.md). Missing operations and live-environment feedback are welcome as issues or PRs.
 
 ## Development
 

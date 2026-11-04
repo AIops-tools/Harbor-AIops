@@ -3,7 +3,7 @@
   "name": "harbor-aiops",
   "displayName": "Harbor AIops",
   "version": "0.2.0",
-  "description": "Governed Harbor registry operations — 38 MCP tools with audit.",
+  "description": "Governed Harbor registry operations — 39 MCP tools with audit.",
   "author": {
     "name": "Wei Zhou",
     "email": "zhouwei008@gmail.com",

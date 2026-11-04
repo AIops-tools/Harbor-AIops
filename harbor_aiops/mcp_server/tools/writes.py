@@ -31,3 +31,16 @@ def harbor_create_tag(
     return writes.create_tag(
         _get_connection(target), project, repository, reference, tag, dry_run
     )
+
+
+@mcp.tool()
+@governed_tool(risk_level="high")
+@tool_errors()
+def harbor_delete_tag(
+    project: str, repository: str, reference: str, tag: str,
+    dry_run: bool = False, target: Optional[str] = None,
+) -> dict:
+    """[WRITE] Delete one verified, mutable tag; no safe undo is minted."""
+    return writes.delete_tag(
+        _get_connection(target), project, repository, reference, tag, dry_run
+    )

@@ -247,6 +247,18 @@ def create_tag(project: str, repository: str, reference: str, tag: str,
                              tag=tag, dry_run=dry_run, target=target))
 
 
+@app.command("delete-tag")
+@cli_errors
+def delete_tag(project: str, repository: str, reference: str, tag: str,
+               dry_run: bool = False, target: Target = None) -> None:
+    """Delete one mutable Harbor tag after exact target checks."""
+    from harbor_aiops.mcp_server.tools.writes import harbor_delete_tag
+    if not dry_run:
+        double_confirm("delete tag", f"{project}/{repository}:{tag}")
+    _print(harbor_delete_tag(project=project, repository=repository, reference=reference,
+                             tag=tag, dry_run=dry_run, target=target))
+
+
 @app.command("gc-execution")
 @cli_errors
 def gc_execution(gc_id: int, target: Target = None) -> None:

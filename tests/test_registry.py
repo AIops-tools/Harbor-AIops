@@ -193,12 +193,86 @@ def test_mcp_surface_has_governed_inventory_and_diagnosis():
     from harbor_aiops.mcp_server.server import mcp
 
     listed = asyncio.run(mcp.list_tools())
-    assert len(listed) == 38
+    assert len(listed) == 39
     assert {t.name for t in listed} >= {"harbor_gc_history", "harbor_replication_tasks",
                                              "harbor_retention_executions", "harbor_diagnose"}
-    writes = {"undo_apply", "harbor_scan_artifact", "harbor_create_tag"}
+    writes = {"undo_apply", "harbor_scan_artifact", "harbor_create_tag",
+              "harbor_delete_tag"}
     assert all(t.annotations.read_only_hint for t in listed if t.name not in writes)
     assert all(not t.annotations.read_only_hint for t in listed if t.name in writes)
+
+
+def test_delete_tag_previews_then_deletes_exact_mutable_tag_with_post_read():
+    deleted = []
+
+    def handler(request):
+        path = request.url.path
+        assert b"team%252Fapp" in request.url.raw_path
+        if request.method == "GET" and path.endswith("/artifacts/v1"):
+            return httpx.Response(200, json={"digest": "sha256:abc"})
+        if request.method == "GET" and path.endswith("/artifacts/stable"):
+            return (httpx.Response(404) if deleted else
+                    httpx.Response(200, json={"digest": "sha256:abc"}))
+        if request.method == "GET" and path.endswith("/artifacts/sha256:abc/tags"):
+            return httpx.Response(200, json=[{"name": "stable", "immutable": False}])
+        if request.method == "DELETE" and path.endswith(
+            "/artifacts/sha256:abc/tags/stable"
+        ):
+            deleted.append(path)
+            return httpx.Response(200)
+        raise AssertionError(f"Unexpected {request.method} {path}")
+
+    conn = _connection(handler)
+    preview = writes.delete_tag(conn, "ops", "team/app", "v1", "stable", dry_run=True)
+    assert preview["dryRun"] is True and deleted == []
+    result = writes.delete_tag(conn, "ops", "team/app", "v1", "stable")
+    assert result["deleted"] is True and len(deleted) == 1
+
+
+@pytest.mark.parametrize("immutable", [True, None])
+def test_delete_tag_refuses_immutable_or_unknown_state_without_write(immutable):
+    def handler(request):
+        path = request.url.path
+        if request.method == "DELETE":
+            raise AssertionError("delete must not run")
+        if path == "/api/v2.0/projects/ops/repositories/app/artifacts/sha256:abc/tags":
+            return httpx.Response(200, json=[{"name": "stable", "immutable": immutable}])
+        if path in (
+            "/api/v2.0/projects/ops/repositories/app/artifacts/v1",
+            "/api/v2.0/projects/ops/repositories/app/artifacts/stable",
+        ):
+            return httpx.Response(200, json={"digest": "sha256:abc"})
+        raise AssertionError(f"Unexpected {request.method} {path}")
+
+    with pytest.raises(ValueError, match="immutability"):
+        writes.delete_tag(_connection(handler), "ops", "app", "v1", "stable")
+
+
+def test_delete_tag_post_read_failure_is_unknown_not_success():
+    deleted = []
+
+    def handler(request):
+        path = request.url.path
+        if request.method == "DELETE":
+            assert path == (
+                "/api/v2.0/projects/ops/repositories/app/"
+                "artifacts/sha256:abc/tags/stable"
+            )
+            deleted.append(1)
+            return httpx.Response(200)
+        if path == "/api/v2.0/projects/ops/repositories/app/artifacts/sha256:abc/tags":
+            return httpx.Response(200, json=[{"name": "stable", "immutable": False}])
+        if path == "/api/v2.0/projects/ops/repositories/app/artifacts/stable" and deleted:
+            return httpx.Response(503)
+        if path in (
+            "/api/v2.0/projects/ops/repositories/app/artifacts/v1",
+            "/api/v2.0/projects/ops/repositories/app/artifacts/stable",
+        ):
+            return httpx.Response(200, json={"digest": "sha256:abc"})
+        raise AssertionError(f"Unexpected {request.method} {path}")
+
+    result = writes.delete_tag(_connection(handler), "ops", "app", "v1", "stable")
+    assert result["outcomeUnknown"] is True and "deleted" not in result
 
 
 def test_new_registry_reads_use_swagger_paths_and_redact_robot_secret():
