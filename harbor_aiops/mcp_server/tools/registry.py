@@ -10,6 +10,169 @@ from harbor_aiops.ops import registry
 @mcp.tool()
 @governed_tool(risk_level="low")
 @tool_errors()
+def harbor_gc_execution(gc_id: int, target: Optional[str] = None) -> dict:
+    """[READ] Get one Harbor garbage-collection execution's current state."""
+    return registry.gc_execution(_get_connection(target), gc_id)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_gc_log(gc_id: int, target: Optional[str] = None) -> dict:
+    """[READ] Read the bounded plain-text log of a GC execution."""
+    return registry.gc_log(_get_connection(target), gc_id)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_replication_task_log(
+    execution_id: int, task_id: int, target: Optional[str] = None
+) -> dict:
+    """[READ] Read the bounded plain-text log of a replication task."""
+    return registry.replication_task_log(_get_connection(target), execution_id, task_id)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_retention_task_log(
+    policy_id: int, execution_id: int, task_id: int, target: Optional[str] = None
+) -> dict:
+    """[READ] Read the bounded plain-text log of a retention task."""
+    return registry.retention_task_log(
+        _get_connection(target), policy_id, execution_id, task_id
+    )
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_projects(limit: int = 50, target: Optional[str] = None) -> dict:
+    """[READ] List visible Harbor projects with measured truncation."""
+    return registry.projects(_get_connection(target), limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_project(name: str, target: Optional[str] = None) -> dict:
+    """[READ] Get one Harbor project by name or ID."""
+    return registry.project(_get_connection(target), name)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_project_summary(name: str, target: Optional[str] = None) -> dict:
+    """[READ] Get Harbor's repository, artifact and storage summary for a project."""
+    return registry.project_summary(_get_connection(target), name)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_repositories(project: str, limit: int = 50, target: Optional[str] = None) -> dict:
+    """[READ] List repositories inside a Harbor project."""
+    return registry.repositories(_get_connection(target), project, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_artifacts(
+    project: str, repository: str, limit: int = 50, target: Optional[str] = None
+) -> dict:
+    """[READ] List artifacts, tags and scan overviews in a repository."""
+    return registry.artifacts(_get_connection(target), project, repository, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_artifact(
+    project: str, repository: str, reference: str, target: Optional[str] = None
+) -> dict:
+    """[READ] Get one artifact with tags, scan overview and immutability status."""
+    return registry.artifact(_get_connection(target), project, repository, reference)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_tags(
+    project: str, repository: str, reference: str, limit: int = 50,
+    target: Optional[str] = None,
+) -> dict:
+    """[READ] List tags and their immutable status for an artifact."""
+    return registry.tags(_get_connection(target), project, repository, reference, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_vulnerabilities(
+    project: str, repository: str, reference: str, target: Optional[str] = None
+) -> dict:
+    """[READ] Get Harbor's stored vulnerability report for an artifact."""
+    return registry.vulnerabilities(_get_connection(target), project, repository, reference)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_replication_policies(limit: int = 50, target: Optional[str] = None) -> dict:
+    """[READ] List replication policies with measured truncation."""
+    return registry.replication_policies(_get_connection(target), limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_replication_policy(policy_id: int, target: Optional[str] = None) -> dict:
+    """[READ] Get a replication policy by its Harbor ID."""
+    return registry.replication_policy(_get_connection(target), policy_id)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_replication_execution(execution_id: int, target: Optional[str] = None) -> dict:
+    """[READ] Get the current state of one replication execution."""
+    return registry.replication_execution(_get_connection(target), execution_id)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_retention_tasks(
+    policy_id: int, execution_id: int, limit: int = 50, target: Optional[str] = None
+) -> dict:
+    """[READ] List tasks of a retention execution, including per-task failures."""
+    return registry.retention_tasks(_get_connection(target), policy_id, execution_id, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_quotas(limit: int = 50, target: Optional[str] = None) -> dict:
+    """[READ] List registry quota usage and limits."""
+    return registry.quotas(_get_connection(target), limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
+def harbor_project_audit_logs(
+    project: str, limit: int = 50, target: Optional[str] = None
+) -> dict:
+    """[READ] List a project's Harbor audit logs; not the MCP governance audit."""
+    return registry.project_audit_logs(_get_connection(target), project, limit)
+
+
+@mcp.tool()
+@governed_tool(risk_level="low")
+@tool_errors()
 def harbor_health(target: Optional[str] = None) -> dict:
     """[READ] Get Harbor component health; unknown components remain visible."""
     return registry.health(_get_connection(target))

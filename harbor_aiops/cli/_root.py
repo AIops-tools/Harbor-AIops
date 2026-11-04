@@ -8,7 +8,13 @@ from typing import Annotated
 
 import typer
 
-from harbor_aiops.cli._common import cli_errors, console, governed, print_truncation_note
+from harbor_aiops.cli._common import (
+    cli_errors,
+    console,
+    double_confirm,
+    governed,
+    print_truncation_note,
+)
 from harbor_aiops.cli.secret import secret_app
 from harbor_aiops.cli.undo import undo_app
 from harbor_aiops.governance.paths import ops_home
@@ -29,6 +35,185 @@ def _print(result: dict, noun: str = "records") -> None:
     result = governed(result)
     console.print_json(json.dumps(result))
     print_truncation_note(result, noun)
+
+
+@app.command("projects")
+@cli_errors
+def projects(limit: Limit = 50, target: Target = None) -> None:
+    """List Harbor projects."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_projects
+    _print(harbor_projects(limit=limit, target=target), "projects")
+
+
+@app.command("project")
+@cli_errors
+def project(name: str, target: Target = None) -> None:
+    """Show one Harbor project."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_project
+    _print(harbor_project(name=name, target=target))
+
+
+@app.command("project-summary")
+@cli_errors
+def project_summary(name: str, target: Target = None) -> None:
+    """Show Harbor's project usage summary."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_project_summary
+    _print(harbor_project_summary(name=name, target=target))
+
+
+@app.command("repositories")
+@cli_errors
+def repositories(project: str, limit: Limit = 50, target: Target = None) -> None:
+    """List repositories in a project."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_repositories
+    _print(harbor_repositories(project=project, limit=limit, target=target), "repositories")
+
+
+@app.command("artifacts")
+@cli_errors
+def artifacts(project: str, repository: str, limit: Limit = 50, target: Target = None) -> None:
+    """List artifacts in a repository."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_artifacts
+    _print(harbor_artifacts(project=project, repository=repository, limit=limit,
+                            target=target), "artifacts")
+
+
+@app.command("artifact")
+@cli_errors
+def artifact(project: str, repository: str, reference: str, target: Target = None) -> None:
+    """Show one artifact by digest or tag."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_artifact
+    _print(harbor_artifact(project=project, repository=repository, reference=reference,
+                           target=target))
+
+
+@app.command("tags")
+@cli_errors
+def tags(project: str, repository: str, reference: str, limit: Limit = 50,
+         target: Target = None) -> None:
+    """List artifact tags."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_tags
+    _print(harbor_tags(project=project, repository=repository, reference=reference,
+                       limit=limit, target=target), "tags")
+
+
+@app.command("vulnerabilities")
+@cli_errors
+def vulnerabilities(project: str, repository: str, reference: str,
+                    target: Target = None) -> None:
+    """Show an artifact's stored vulnerability report."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_vulnerabilities
+    _print(harbor_vulnerabilities(project=project, repository=repository,
+                                  reference=reference, target=target))
+
+
+@app.command("replication-policies")
+@cli_errors
+def replication_policies(limit: Limit = 50, target: Target = None) -> None:
+    """List replication policies."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_replication_policies
+    _print(harbor_replication_policies(limit=limit, target=target), "replication policies")
+
+
+@app.command("replication-policy")
+@cli_errors
+def replication_policy(policy_id: int, target: Target = None) -> None:
+    """Show a replication policy."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_replication_policy
+    _print(harbor_replication_policy(policy_id=policy_id, target=target))
+
+
+@app.command("replication-execution")
+@cli_errors
+def replication_execution(execution_id: int, target: Target = None) -> None:
+    """Show one replication execution."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_replication_execution
+    _print(harbor_replication_execution(execution_id=execution_id, target=target))
+
+
+@app.command("retention-tasks")
+@cli_errors
+def retention_tasks(policy_id: int, execution_id: int, limit: Limit = 50,
+                    target: Target = None) -> None:
+    """List tasks of a retention execution."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_retention_tasks
+    _print(harbor_retention_tasks(policy_id=policy_id, execution_id=execution_id,
+                                  limit=limit, target=target), "retention tasks")
+
+
+@app.command("quotas")
+@cli_errors
+def quotas(limit: Limit = 50, target: Target = None) -> None:
+    """List Harbor quotas."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_quotas
+    _print(harbor_quotas(limit=limit, target=target), "quotas")
+
+
+@app.command("project-audit-logs")
+@cli_errors
+def project_audit_logs(project: str, limit: Limit = 50, target: Target = None) -> None:
+    """List Harbor audit logs for a project."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_project_audit_logs
+    _print(harbor_project_audit_logs(project=project, limit=limit, target=target), "audit logs")
+
+
+@app.command("scan-artifact")
+@cli_errors
+def scan_artifact(project: str, repository: str, reference: str,
+                  dry_run: bool = False, target: Target = None) -> None:
+    """Request a Harbor artifact vulnerability scan."""
+    from harbor_aiops.mcp_server.tools.writes import harbor_scan_artifact
+    if not dry_run:
+        double_confirm("scan artifact", f"{project}/{repository}:{reference}")
+    _print(harbor_scan_artifact(project=project, repository=repository,
+                                reference=reference, dry_run=dry_run, target=target))
+
+
+@app.command("create-tag")
+@cli_errors
+def create_tag(project: str, repository: str, reference: str, tag: str,
+               dry_run: bool = False, target: Target = None) -> None:
+    """Create and verify a Harbor artifact tag."""
+    from harbor_aiops.mcp_server.tools.writes import harbor_create_tag
+    if not dry_run:
+        double_confirm("create tag", f"{project}/{repository}:{tag}")
+    _print(harbor_create_tag(project=project, repository=repository, reference=reference,
+                             tag=tag, dry_run=dry_run, target=target))
+
+
+@app.command("gc-execution")
+@cli_errors
+def gc_execution(gc_id: int, target: Target = None) -> None:
+    """Show one GC execution."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_gc_execution
+    _print(harbor_gc_execution(gc_id=gc_id, target=target))
+
+
+@app.command("gc-log")
+@cli_errors
+def gc_log(gc_id: int, target: Target = None) -> None:
+    """Show a bounded GC execution log."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_gc_log
+    _print(harbor_gc_log(gc_id=gc_id, target=target))
+
+
+@app.command("replication-task-log")
+@cli_errors
+def replication_task_log(execution_id: int, task_id: int, target: Target = None) -> None:
+    """Show a bounded replication task log."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_replication_task_log
+    _print(harbor_replication_task_log(execution_id=execution_id, task_id=task_id,
+                                       target=target))
+
+
+@app.command("retention-task-log")
+@cli_errors
+def retention_task_log(policy_id: int, execution_id: int, task_id: int,
+                       target: Target = None) -> None:
+    """Show a bounded retention task log."""
+    from harbor_aiops.mcp_server.tools.registry import harbor_retention_task_log
+    _print(harbor_retention_task_log(policy_id=policy_id, execution_id=execution_id,
+                                     task_id=task_id, target=target))
 
 
 @app.command("init")

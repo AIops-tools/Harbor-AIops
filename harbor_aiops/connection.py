@@ -18,11 +18,25 @@ class HarborApiError(Exception):
         super().__init__(message)
 
 
+class HarborWriteUncertainError(HarborApiError):
+    """A mutating HTTP request may have reached Harbor before its response was lost."""
+
+
 def segment(value: str | int) -> str:
     text = str(value)
     if not text or text in (".", "..") or "/" in text:
         raise ValueError("Invalid Harbor path segment.")
     return quote(text, safe="")
+
+
+def repository_segment(value: str) -> str:
+    """Harbor requires a slash in a repository name to be encoded twice."""
+    if not value or value.startswith("/") or value.endswith("/"):
+        raise ValueError("Invalid Harbor repository name.")
+    parts = value.split("/")
+    if any(part in ("", ".", "..") for part in parts):
+        raise ValueError("Invalid Harbor repository name.")
+    return quote(quote(value, safe=""), safe="")
 
 
 class HarborConnection:
@@ -33,6 +47,7 @@ class HarborConnection:
             auth=httpx.BasicAuth(target.username, target.password),
             verify=target.verify,
             timeout=target.timeout,
+            trust_env=False,
             headers={"Accept": "application/json"},
         )
 
@@ -69,6 +84,60 @@ class HarborConnection:
             return response.json()
         except ValueError as exc:
             raise HarborApiError(f"Harbor returned non-JSON data for {path}.") from exc
+
+    def write(
+        self, method: str, path: str, *, body: dict | None = None,
+        expected_status: int,
+    ) -> dict:
+        if method not in ("POST", "DELETE") or not path.startswith("/") or ".." in path.split("/"):
+            raise ValueError("Invalid Harbor write request.")
+        try:
+            response = self._client.request(method, path.lstrip("/"), json=body)
+        except httpx.ConnectTimeout as exc:
+            raise HarborApiError("Harbor connection timed out before the write.") from exc
+        except httpx.ConnectError as exc:
+            raise HarborApiError("Could not connect to Harbor for the write.") from exc
+        except httpx.HTTPError as exc:
+            raise HarborWriteUncertainError(
+                f"Harbor {method} response was lost ({type(exc).__name__}); check state."
+            ) from exc
+        if response.status_code == 408 or response.status_code >= 500:
+            raise HarborWriteUncertainError(
+                f"Harbor returned HTTP {response.status_code} for {method} {path}; check state."
+            )
+        if response.status_code != expected_status:
+            raise HarborApiError(
+                f"Harbor did not accept {method} {path} as expected ({response.status_code}).",
+                response.status_code,
+            )
+        return {"statusCode": response.status_code,
+                "requestId": response.headers.get("X-Request-Id"),
+                "location": response.headers.get("Location")}
+
+    def get_text(self, path: str, *, max_bytes: int = 12000) -> dict:
+        if not path.startswith("/") or ".." in path.split("/"):
+            raise ValueError("Invalid Harbor log path.")
+        try:
+            with self._client.stream("GET", path.lstrip("/")) as response:
+                if response.status_code >= 400:
+                    raise HarborApiError(
+                        f"Harbor rejected log GET {path} ({response.status_code}).",
+                        response.status_code,
+                    )
+                data = bytearray()
+                truncated = False
+                for chunk in response.iter_bytes():
+                    data.extend(chunk[: max(0, max_bytes + 1 - len(data))])
+                    if len(data) > max_bytes:
+                        truncated = True
+                        break
+        except httpx.HTTPError as exc:
+            raise HarborApiError(f"Harbor log request failed: {type(exc).__name__}.") from exc
+        return {
+            "text": data[:max_bytes].decode("utf-8", errors="replace")
+            + ("…" if truncated else ""),
+            "truncated": truncated,
+        }
 
     def list(self, path: str, *, limit: int = 50, params: dict[str, Any] | None = None) -> dict:
         if not 1 <= limit <= 500:

@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "harbor-aiops"
-version = "0.1.0"
+version = "0.2.0"
 description = "Governed Harbor registry diagnosis for health, storage, GC, replication and retention."
 readme = "README.md"
 license = "MIT"

@@ -1,7 +1,7 @@
 {
   "name": "@zw008/harbor-aiops",
-  "version": "0.1.0",
-  "description": "Governed Harbor registry diagnosis — 10 MCP tools with audit.",
+  "version": "0.2.0",
+  "description": "Governed Harbor registry operations — 30 MCP tools with audit.",
   "private": true,
   "license": "MIT",
   "homepage": "https://github.com/AIops-tools/Harbor-AIops",

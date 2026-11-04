@@ -1,14 +1,16 @@
 <!-- mcp-name: io.github.AIops-tools/harbor-aiops -->
 # Harbor AIops
 
-Governed, read-only diagnosis for Harbor container registries. The 0.1.0 source tree exposes 8 Harbor tools plus `undo_list` and `undo_apply` through MCP, and corresponding CLI commands. Every MCP tool is audited and budgeted by the bundled governance harness. No Harbor write operation or undo token is produced in this first slice.
+Governed Harbor container-registry operations with 30 MCP tools and corresponding CLI commands. Every call is audited and budgeted by the bundled governance harness. Two maintenance operations—artifact scan and tag creation—have dry-run previews; uncertain results are reported as `outcomeUnknown`.
 
 ## What it checks
 
 - Component health and system volume use.
+- Projects, repository inventory, artifacts, tags, vulnerability reports, quotas and project audit logs.
 - Garbage collection execution history.
-- Replication executions and their tasks.
-- A retention policy and its execution history by actual policy ID.
+- GC execution details and bounded plain-text logs.
+- Replication policies, executions, tasks and bounded task logs.
+- Retention policy, execution, tasks and bounded task logs by actual IDs.
 - `harbor_diagnose` combines health, volume, GC and replication observations. Failed probes appear as errors with `data: null`.
 
 Lists have `items`, `returned`, `limit`, and measured `truncated` fields. They are capped at 500 records per call.
@@ -32,7 +34,7 @@ Run `uv run harbor-aiops secret set primary`, then `uv run harbor-aiops doctor` 
 
 ## Scope and verification
 
-The first slice is read-only. Retention execution, replication restart, GC start/stop and image deletion are withheld until their actual asynchronous outcomes and failure states can be verified against a disposable Harbor deployment. See [verification](docs/VERIFICATION.md). Missing operations and live-environment feedback are welcome as issues or PRs.
+The `scan-artifact` command starts an asynchronous scan and reports an unknown final outcome until its status is checked. `create-tag` proves the tag was absent and checks that it appeared after the write; it does not mint an undo token because immutability and later artifact changes can make inverse deletion unsafe. Retention execution, replication restart, GC start/stop, artifact deletion and policy changes remain outside this release until their actual outcomes and recovery paths can be verified on disposable Harbor. See [verification](docs/VERIFICATION.md). Missing operations and live-environment feedback are welcome as issues or PRs.
 
 ## Development
 

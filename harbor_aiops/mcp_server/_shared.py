@@ -12,7 +12,7 @@ import httpx
 from mcp.server import MCPServer
 
 from harbor_aiops import __version__
-from harbor_aiops.connection import ConnectionManager, HarborApiError
+from harbor_aiops.connection import ConnectionManager, HarborApiError, HarborWriteUncertainError
 from harbor_aiops.governance import mark_unknown, sanitize
 from harbor_aiops.secretstore import SecretStoreError
 
@@ -56,7 +56,9 @@ def tool_errors(shape: str = "dict") -> Callable:
                     "error": _safe_error(exc, func.__name__),
                     "hint": "Run 'harbor-aiops doctor' to check target and permissions.",
                 }
-                return mark_unknown(payload) if isinstance(exc, _UNDETERMINED_ERRORS) else payload
+                return mark_unknown(payload) if isinstance(
+                    exc, (*_UNDETERMINED_ERRORS, HarborWriteUncertainError)
+                ) else payload
 
         return wrapper
 
@@ -67,7 +69,7 @@ mcp = MCPServer(
     "harbor-aiops",
     version=__version__,
     instructions=(
-        "Read-only Harbor registry operations: health, volume, GC, replication and "
+        "Governed Harbor registry operations: health, volume, GC, replication and "
         "retention diagnosis. Every tool is audited and budgeted."
     ),
 )
