@@ -6,6 +6,7 @@
 - Add bounded job logs, measured pagination truncation and explicit failed probes.
 - Add guarded artifact scan and tag creation; preserve unknown outcomes on asynchronous work or lost responses.
 - Limit Docker build context and image copies to package source and packaging files.
+- Add GitHub CI for tests, lint, security scan and build.
 
 ## 0.1.0
 
