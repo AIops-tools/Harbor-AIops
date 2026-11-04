@@ -1,0 +1,24 @@
+{
+  "id": "harbor-aiops",
+  "name": "Harbor AIops",
+  "description": "Governed Harbor registry diagnosis — 10 MCP tools with audit.",
+  "skills": [
+    "./skills"
+  ],
+  "mcpServers": {
+    "harbor-aiops": {
+      "transport": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "harbor-aiops==0.1.0",
+        "harbor-aiops-mcp"
+      ]
+    }
+  },
+  "configSchema": {
+    "type": "object",
+    "additionalProperties": false,
+    "properties": {}
+  }
+}

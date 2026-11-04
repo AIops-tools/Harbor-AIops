@@ -1,0 +1,24 @@
+{
+  "$schema": "https://anthropic.com/claude-code/plugin.schema.json",
+  "name": "harbor-aiops",
+  "displayName": "Harbor AIops",
+  "version": "0.1.0",
+  "description": "Governed Harbor registry diagnosis — 10 MCP tools with audit.",
+  "author": {
+    "name": "Wei Zhou",
+    "email": "zhouwei008@gmail.com",
+    "url": "https://github.com/AIops-tools"
+  },
+  "homepage": "https://github.com/AIops-tools/Harbor-AIops",
+  "repository": "https://github.com/AIops-tools/Harbor-AIops",
+  "license": "MIT",
+  "keywords": [
+    "olvm",
+    "ovirt",
+    "oracle-linux",
+    "kvm",
+    "virtualization",
+    "mcp",
+    "aiops"
+  ]
+}

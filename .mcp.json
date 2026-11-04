@@ -1,0 +1,13 @@
+{
+  "mcpServers": {
+    "harbor-aiops": {
+      "type": "stdio",
+      "command": "uvx",
+      "args": [
+        "--from",
+        "harbor-aiops==0.1.0",
+        "harbor-aiops-mcp"
+      ]
+    }
+  }
+}

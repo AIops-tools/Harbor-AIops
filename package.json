@@ -1,0 +1,20 @@
+{
+  "name": "@zw008/harbor-aiops",
+  "version": "0.1.0",
+  "description": "Governed Harbor registry diagnosis — 10 MCP tools with audit.",
+  "private": true,
+  "license": "MIT",
+  "homepage": "https://github.com/AIops-tools/Harbor-AIops",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AIops-tools/Harbor-AIops.git"
+  },
+  "openclaw": {
+    "compat": {
+      "pluginApi": ">=2026.3.24-beta.2"
+    },
+    "build": {
+      "openclawVersion": "2026.3.24-beta.2"
+    }
+  }
+}
