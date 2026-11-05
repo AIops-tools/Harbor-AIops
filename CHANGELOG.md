@@ -1,6 +1,6 @@
 # Changelog
 
-## Unreleased
+## v0.2.0 — 2026-11-05
 
 - Expand to 39 governed MCP/CLI tools for project, repository, artifact, tag, vulnerability, quota, GC, replication and retention operations.
 - Add bounded job logs, measured pagination truncation and explicit failed probes.
