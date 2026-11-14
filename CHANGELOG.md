@@ -1,5 +1,9 @@
 # Changelog
 
+## v0.2.1 — 2026-11-14
+
+- Clarify low-scoring MCP tool selection, input parameters, and result semantics in the published tool schema; preserve existing operations.
+
 ## v0.2.0 — 2026-11-05
 
 - Expand to 39 governed MCP/CLI tools for project, repository, artifact, tag, vulnerability, quota, GC, replication and retention operations.

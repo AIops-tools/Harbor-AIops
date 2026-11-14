@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "harbor-aiops"
-version = "0.2.0"
+version = "0.2.1"
 description = "Governed Harbor registry diagnosis for health, storage, GC, replication and retention."
 readme = "README.md"
 license = "MIT"
@@ -17,6 +17,7 @@ dependencies = [
     "pyyaml>=6.0,<7.0",
     "cryptography>=42.0",
     "mcp[cli]>=2.0,<3.0",
+    "pydantic>=2.0,<3.0",
 ]
 
 [dependency-groups]
